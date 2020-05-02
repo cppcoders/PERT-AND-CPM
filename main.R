@@ -5,7 +5,7 @@ library(sna)
 library(ggplot2)
 library(intergraph)
 library(hrbrthemes)
-
+library(plotly)
 #REading data 
 data = read.csv("data.csv")
 
@@ -141,18 +141,28 @@ for(i in unique(data[2:nrow(data), "Immediate.Predecessor" ] )   )
 col = c(col , "#30d155")
 labels = c(labels , "J")
 
+
+Time = data[1:10 , "Activity.Time"]
+ES = as.character(data[1:10 , "ES"])
+EF = as.character(data[1:10 , "EF"])
+LS= as.character(data[1:10 , "LS"])
+LF = as.character(data[1:10 , "LF"])
 net = graph.data.frame( df, directed = T)
-#png("images/Network.png", width = 960 , height = 480 , units = "px"  )
-ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col  )  +
+
+
+p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T )  +
   geom_point(aes(color = col), size = 12, alpha = 0.5) +
-  geom_point(aes(color = col), size = 9) +
+  geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF ), size = 9) +
   geom_text(label = labels ,  color = "white", fontface = "bold") +
-    guides(color = FALSE) +
   theme_ft_rc() +
   xlab("")+
-  ylab("")  
-#dev.off()
+  ylab("")+
+  theme(legend.position = "none")
 
+fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 960 , height = 620 )
+axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
+fig <- fig %>% layout( xaxis = axis , yaxis = axis)
+fig
 
 
 
