@@ -100,6 +100,7 @@ data$status = rep("N" , nrow(data))
 
 #Setting the Backward start node LS & LF
 data[data$Activity=="J" , c("LS" , "LF")] = c(data[data$Activity=="J" , c("ES" ,"EF")])
+
 #Starting a backward dfs path
 data = bdfs(data , "J" )
 
@@ -109,7 +110,7 @@ data = data[, !names(data) %in% "status"]
 #Creating "S" column = LS - ES for each node 
 data$S = data$LS - data$ES
 
-
+print(data[1:12 , -c(2) ])
 #Creating a type column for each node to determine the Critical path 
 data$type = rep("Critical" , nrow(data))
 
@@ -141,16 +142,30 @@ for(i in unique(data[2:nrow(data), "Immediate.Predecessor" ] )   )
 col = c(col , "#30d155")
 labels = c(labels , "J")
 
+r = unique(data[2:nrow(data) , "Immediate.Predecessor"])
+r = c(r , "J")
 
-Time = data[1:10 , "Activity.Time"]
-ES = as.character(data[1:10 , "ES"])
-EF = as.character(data[1:10 , "EF"])
-LS= as.character(data[1:10 , "LS"])
-LF = as.character(data[1:10 , "LF"])
+Time = vector()
+ES = vector()
+EF =  vector()
+LS = vector()
+LF = vector()
+for(i in r )
+{
+  indx = which(data$Activity==i )
+  if(length(indx) >1)
+    indx = indx[1]
+  Time = c(Time , data[indx  , "Activity.Time"])
+  ES = c(ES , data[indx  , "ES"])
+  EF = c(EF , data[indx  , "EF"])
+  LS = c(LS , data[indx  , "LS"])
+  LF = c(LF , data[indx  , "LF"])
+}
 net = graph.data.frame( df, directed = T)
 
 
-p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T )  +
+
+p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T , edge.label = data[2:12 , "S"] , edge.label.fill = "#252a32" , edge.label.color = "white" )  +
   geom_point(aes(color = col), size = 12, alpha = 0.5) +
   geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF ), size = 9) +
   geom_text(label = labels ,  color = "white", fontface = "bold") +
@@ -159,10 +174,12 @@ p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T
   ylab("")+
   theme(legend.position = "none")
 
+
 fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 960 , height = 620 )
 axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
 fig <- fig %>% layout( xaxis = axis , yaxis = axis)
 fig
+
 
 
 
