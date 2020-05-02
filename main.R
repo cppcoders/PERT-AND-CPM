@@ -1,4 +1,10 @@
 library(igraph)
+library(GGally)
+library(network)
+library(sna)
+library(ggplot2)
+library(intergraph)
+library(hrbrthemes)
 
 #REading data 
 data = read.csv("data.csv")
@@ -103,8 +109,10 @@ data = data[, !names(data) %in% "status"]
 #Creating "S" column = LS - ES for each node 
 data$S = data$LS - data$ES
 
+
 #Creating a type column for each node to determine the Critical path 
 data$type = rep("Critical" , nrow(data))
+
 #Setting the type column based on the "S" Column 
 for(i in 1:nrow(data))
 {
@@ -113,7 +121,37 @@ for(i in 1:nrow(data))
 }
 
 
+#Plotting the graph 
 
+df = data.frame(source= data$Immediate.Predecessor , target = data$Activity  , type = data$type )
+df = df[2:nrow(df) , ]
+df$type = data[1:(nrow(data)-1) , "type"]
+network <- graph_from_data_frame(d=df, vertices = unique(data$Activity) ,  directed=T) 
+
+col = vector()
+labels = vector()
+for(i in unique(data[2:nrow(data), "Immediate.Predecessor" ] )   )
+{
+  labels = c(labels , i)
+  if(data[data$Activity == i, "type"]=="Critical")
+    col = c(col , "#30d155")
+  else
+    col = c(col , "#ffd609")
+}
+col = c(col , "#30d155")
+labels = c(labels , "J")
+
+net = graph.data.frame( df, directed = T)
+#png("images/Network.png", width = 960 , height = 480 , units = "px"  )
+ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col  )  +
+  geom_point(aes(color = col), size = 12, alpha = 0.5) +
+  geom_point(aes(color = col), size = 9) +
+  geom_text(label = labels ,  color = "white", fontface = "bold") +
+    guides(color = FALSE) +
+  theme_ft_rc() +
+  xlab("")+
+  ylab("")  
+#dev.off()
 
 
 
