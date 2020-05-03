@@ -14,20 +14,22 @@ data$Immediate.Predecessor = as.character(data$Immediate.Predecessor)
 data$Activity = as.character(data$Activity)
 
 
-
 #Cleaning Immediate.Predecessor column from multible nodes
 for(i in 1:nrow(data))
 {
-  if( length(data$Immediate.Predecessor) >1 & substr(data[i, "Immediate.Predecessor"] , 2, 2 )== '-')
+  if(substr(data[i, "Immediate.Predecessor"] , 2, 2 )== '-')
   {
-    temp = as.character(substr(data[i, "Immediate.Predecessor" ], 3, 3) )
-    temp2 = as.character(substr(data[i, "Immediate.Predecessor" ], 1, 1) )
-    data[i , "Immediate.Predecessor"]  = temp2
-    r = data[i , ]
-    r$Immediate.Predecessor = temp 
-    data = rbind(data , r )
+    temp = strsplit(data[i , "Immediate.Predecessor"] ,"-")[[1]]
+    data[i , "Immediate.Predecessor"]  = temp[1]
+    for(j in 2:length(temp) )
+    {
+      r = data[i , ]
+      r$Immediate.Predecessor = temp[j]
+      data = rbind(data , r )
+    }
   }
 }
+
 
 
 dfs = function(data, node , parent)
@@ -164,7 +166,6 @@ for(i in r )
 net = graph.data.frame( df, directed = T)
 
 
-
 p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T , edge.label = data[2:12 , "S"] , edge.label.fill = "#252a32" , edge.label.color = "white" )  +
   geom_point(aes(color = col), size = 12, alpha = 0.5) +
   geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF ), size = 9) +
@@ -174,17 +175,11 @@ p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T
   ylab("")+
   theme(legend.position = "none")
 
-
-fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 960 , height = 620 )
+p
+fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 1200 , height = 620 )
 axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
 fig <- fig %>% layout( xaxis = axis , yaxis = axis)
 fig
-
-
-
-
-
-
 
 
 
