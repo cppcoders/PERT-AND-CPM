@@ -7,7 +7,7 @@ library(intergraph)
 library(hrbrthemes)
 library(plotly)
 #REading data 
-data = read.csv("Data/data.csv")
+data = read.csv("Data/test1.csv")
 
 #Replacing the "factor" class of columns 
 data$Immediate.Predecessor = as.character(data$Immediate.Predecessor)
@@ -74,6 +74,7 @@ levels = function(data , start)
 {
   queue = c(start)
   level = data.frame(Activity = unique(data$Activity) , level = rep(0 , length(unique(data$Activity))))
+  level$Activity = as.character(level$Activity)
   while(length(queue) > 0)
   {
     node  =queue[1]
@@ -85,42 +86,42 @@ levels = function(data , start)
       queue=  c(queue , i)
     }
   }
-  print("Levels function")
   level
 }
 
 
-bfs = function (data , start)
+bfs = function (data )
 {
-  path = vector()
+  level = levels(data, "Start")
+  start = min(level$level)
+  end = max(level$level)
   queue = c(start)
+  path = vector()
   data$visited = rep(FALSE, nrow(data))
   data[data$Activity ==start , "visited"] = TRUE
   while(length(queue) > 0) 
   {
     node = queue[1]
     queue = queue[-1] 
-    path = c(path , node)
-    c = children(data , node)
+    path = c(path , level[level$level ==node ,"Activity"] )
+    c = level[level$level == node +1 , "Activity"]
     for(i in c) 
     {
       if(!data[data$Activity == i , "visited"])
       {
-        p = parents(data , i )
+        p = parents(data , i)
         mx = max(data[data$Activity %in% p , "EF"])
-        
         data[data$Activity ==i , "ES"] = mx 
         data[data$Activity ==i , "EF"]= mx+ data[data$Activity == i ,"Activity.Time"]
         data[data$Activity==i , "visited" ] = TRUE
-        queue = c(queue, i )
       }
     }
+    if(node<=end)
+      queue = c(queue, node + 1)
   }
   l = list(data , path )
   l
 }
-
-
 
 backward = function(data , path)
 {
@@ -146,16 +147,16 @@ data$ES = rep(0 , nrow(data))
 data$EF = rep(0 , nrow(data))
 data$LS = rep(0 , nrow(data))
 data$LF = rep(0 , nrow(data))
-#data$status = rep("N" , nrow(data))
 
 
 #Setting the start node ES & EF
 data[data$Activity==start_node, c("ES" , "EF")] = c(0 , 0 )
 
 #Starting a forward bfs path 
-forward = bfs(data , start_node )
+forward = bfs(data)
 data = forward[[1]]
 path = forward[[2]]
+print(path)
 
 data = data[ , !names(data) %in% "visited"]
 #Starting a backward bfs path
@@ -166,8 +167,8 @@ data = backward(data , path )
 data = data[, !names(data) %in% "status"]
 
 #Creating "S" column = LS - ES for each node 
-data$S = data$LS - data$ES
-
+data$S = abs(data$LS - data$ES)
+print(data)
 #Creating a type column for each node to determine the Critical path 
 data$type = rep("Critical" , nrow(data))
 
@@ -177,6 +178,7 @@ for(i in 1:nrow(data))
   if(data[i, "S"] != 0)
     data[i, "type"] = "Normal"
 }
+
 
 
 #Plotting the graph 
@@ -238,8 +240,6 @@ fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 120
 axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
 fig <- fig %>% layout( xaxis = axis , yaxis = axis)
 fig
-
-
 
 
 
