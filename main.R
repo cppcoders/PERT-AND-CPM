@@ -7,7 +7,7 @@ library(intergraph)
 library(hrbrthemes)
 library(plotly)
 #REading data 
-data = read.csv("data.csv")
+data = read.csv("Data/data.csv")
 
 #Replacing the "factor" class of columns 
 data$Immediate.Predecessor = as.character(data$Immediate.Predecessor)
@@ -31,55 +31,112 @@ for(i in 1:nrow(data))
 }
 
 
+#Creating the start and End points ###########################################################################3
+start_node = "Start"
+start_nodes = data[data$Immediate.Predecessor == "-" , "Immediate.Predecessor"]
 
-dfs = function(data, node , parent)
+r = data[1 , ]
+r$Activity = "Start"
+r$Title = 'Starting the project'
+r$Immediate.Predecessor = "-"
+r$Activity.Time = 0
+data[data$Immediate.Predecessor=="-","Immediate.Predecessor"] = "Start"
+data = rbind(r , data)
+
+end_nodes = unique(data[(! data$Activity %in% unique(data$Immediate.Predecessor) ), "Activity"] )
+
+for(i in end_nodes)
 {
-  current_node_time = data[data$Activity ==node & data$Immediate.Predecessor ==parent , "Activity.Time"] + 
-    data[data$Activity ==node & data$Immediate.Predecessor ==parent , "ES"]
-  children = data[data$Immediate.Predecessor == node , "Activity"]
-  if(length(children) >=1)
+  r = data[1 , ]
+  r$Activity = "End"
+  r$Title = 'Ending the project'
+  r$Immediate.Predecessor = i
+  r$Activity.Time = 0
+  data = rbind(data , r)
+}
+end_node = "End"
+
+##############################################################################################################
+parents = function(data , node)
+{
+  p = data[data$Activity ==node , "Immediate.Predecessor"]
+  p
+}
+
+
+children = function(data , node)
+{
+  c = data[data$Immediate.Predecessor == node , "Activity"]
+  c
+}
+
+levels = function(data , start)
+{
+  queue = c(start)
+  level = data.frame(Activity = unique(data$Activity) , level = rep(0 , length(unique(data$Activity))))
+  while(length(queue) > 0)
   {
-    
-    for(i in children)
+    node  =queue[1]
+    queue = queue[-1]
+    c = children(data , node)
+    for(i in c)
     {
-      #print(i)
-      if(data[data$Activity == i & data$Immediate.Predecessor ==node , "status"] == "N" )
+      level[level$Activity == i ,"level"]= max(level[level$Activity == node , "level"] + 1 ,  level[level$Activity == i ,"level"])
+      queue=  c(queue , i)
+    }
+  }
+  print("Levels function")
+  level
+}
+
+
+bfs = function (data , start)
+{
+  path = vector()
+  queue = c(start)
+  data$visited = rep(FALSE, nrow(data))
+  data[data$Activity ==start , "visited"] = TRUE
+  while(length(queue) > 0) 
+  {
+    node = queue[1]
+    queue = queue[-1] 
+    path = c(path , node)
+    c = children(data , node)
+    for(i in c) 
+    {
+      if(!data[data$Activity == i , "visited"])
       {
-        data[data$Activity == i , "status"] = "V"
-        data[data$Activity == i , "ES"] = current_node_time 
-        data[data$Activity == i , "EF"] = current_node_time + data[data$Activity == i , "Activity.Time"]
-        data = dfs(data , i , node )
+        p = parents(data , i )
+        mx = max(data[data$Activity %in% p , "EF"])
+        
+        data[data$Activity ==i , "ES"] = mx 
+        data[data$Activity ==i , "EF"]= mx+ data[data$Activity == i ,"Activity.Time"]
+        data[data$Activity==i , "visited" ] = TRUE
+        queue = c(queue, i )
       }
     }
   }
-  data
+  l = list(data , path )
+  l
 }
 
 
 
-bdfs = function(data , node )
+backward = function(data , path)
 {
-  current_node_time = data[data$Activity ==node , "LS"] 
-  if(length(current_node_time)>1)
-    current_node_time = current_node_time[1]  
-  parents = data[data$Activity == node , "Immediate.Predecessor"]
-  parents = rev(parents)
-  for(i in parents)
+  #Setting the Backward start node LS & LF
+  data[data$Activity==end_node , c("LS" , "LF")] = c(data[data$Activity==end_node , c("ES" ,"EF")])
+  
+  path = rev(path )
+  path = path[2:length(path)]
+  for(i in path )
   {
-    if(i != '-')
-    for(indx in i)
-    {
-      print(paste(indx, current_node_time))
-        if(data[data$Activity==indx, "status"] == "N" )
-        {
-          data[data$Activity==indx, "status"] = "V"
-          data[data$Activity==indx , "LF"] = current_node_time 
-          data[data$Activity==indx , "LS"] = abs(current_node_time -data[data$Activity==indx, "Activity.Time"])
-          data = bdfs(data , i )
-        } 
-    }
+    p = children(data , i )
+    mn = min(data[data$Activity %in% p , "LS"])
+    data[data$Activity == i , "LF" ] = mn 
+    data[data$Activity == i , "LS"] = mn - data[data$Activity == i , "Activity.Time"]
   }
-data
+  data
 }
 
 
@@ -89,22 +146,21 @@ data$ES = rep(0 , nrow(data))
 data$EF = rep(0 , nrow(data))
 data$LS = rep(0 , nrow(data))
 data$LF = rep(0 , nrow(data))
-data$status = rep("N" , nrow(data))
+#data$status = rep("N" , nrow(data))
+
 
 #Setting the start node ES & EF
-data[data$Activity=="A", c("ES" , "EF")] = c(0 , 3)
+data[data$Activity==start_node, c("ES" , "EF")] = c(0 , 0 )
 
-#Starting a forward dfs path 
-data = dfs(data , "A" , "-")
+#Starting a forward bfs path 
+forward = bfs(data , start_node )
+data = forward[[1]]
+path = forward[[2]]
 
-#Reset the visited column 
-data$status = rep("N" , nrow(data))
+data = data[ , !names(data) %in% "visited"]
+#Starting a backward bfs path
+data = backward(data , path )
 
-#Setting the Backward start node LS & LF
-data[data$Activity=="J" , c("LS" , "LF")] = c(data[data$Activity=="J" , c("ES" ,"EF")])
-
-#Starting a backward dfs path
-data = bdfs(data , "J" )
 
 #dropping the visited status column 
 data = data[, !names(data) %in% "status"]
@@ -112,7 +168,6 @@ data = data[, !names(data) %in% "status"]
 #Creating "S" column = LS - ES for each node 
 data$S = data$LS - data$ES
 
-print(data[1:12 , -c(2) ])
 #Creating a type column for each node to determine the Critical path 
 data$type = rep("Critical" , nrow(data))
 
@@ -142,10 +197,10 @@ for(i in unique(data[2:nrow(data), "Immediate.Predecessor" ] )   )
     col = c(col , "#ffd609")
 }
 col = c(col , "#30d155")
-labels = c(labels , "J")
+labels = c(labels , end_node)
 
 r = unique(data[2:nrow(data) , "Immediate.Predecessor"])
-r = c(r , "J")
+r = c(r , end_node)
 
 Time = vector()
 ES = vector()
@@ -166,7 +221,10 @@ for(i in r )
 net = graph.data.frame( df, directed = T)
 
 
-p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T , edge.label = data[2:12 , "S"] , edge.label.fill = "#252a32" , edge.label.color = "white" )  +
+p = ggnet2(net, arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T ,
+           edge.label = data[2:nrow(data) , "S"] , 
+           edge.label.fill = "#252a32" ,
+           edge.label.color = "white" )+
   geom_point(aes(color = col), size = 12, alpha = 0.5) +
   geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF ), size = 9) +
   geom_text(label = labels ,  color = "white", fontface = "bold") +
@@ -180,6 +238,8 @@ fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF") , width = 120
 axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
 fig <- fig %>% layout( xaxis = axis , yaxis = axis)
 fig
+
+
 
 
 

@@ -1,0 +1,16 @@
+Activity,Title,Immediate.Predecessor,Activity.Time
+A,High-level analysis,-,7 
+B,Selection of hardware platform,A,7
+C,Installation and commissioning of hardware,B,14
+D,Detailed analysis of core modules,A,14
+E,Detailed analysis of supporting modules,D,14
+F,Programming of core modules,D,14
+G,Programming of supporting modules,E,21
+H,Quality assurance of core modules,F,7
+I,Quality assurance of supporting modules,G,7
+J,Core module training,C-H,1
+K,Development and QA of accounting reporting,E,7
+L,Development and QA of management reporting,E,7
+M,Development of Management Information System,L,7
+N,Detailed training,I-J-K-M,7
+
