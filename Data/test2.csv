@@ -1,0 +1,7 @@
+A,B,C,D
+A,"test",-,2
+B,"test",A,4
+C,"test",B,3
+D,"test",B,2
+E,"test",C-D,10
+F,"test",B,4

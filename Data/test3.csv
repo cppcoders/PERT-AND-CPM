@@ -1,0 +1,9 @@
+Activity,Title,Immediate.Predecessor,Activity.Time
+A,"test",-,3
+B,"test",A,4
+C,"test",A,2
+D,"test",B,5
+E,"test",C,1
+F,"test",C,2
+G,"test",D-E,4
+H,"test",F-G,3

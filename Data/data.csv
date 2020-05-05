@@ -1,7 +1,7 @@
 Activity,Title,Immediate.Predecessor,Activity.Time
 A,test,-,3
-B,test,A,60
 C,test,A,5
+B,test,A,60
 D,test,A,15
 E,test,B,6
 F,test,D,40
