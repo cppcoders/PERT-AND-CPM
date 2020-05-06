@@ -224,6 +224,7 @@ prog = function(name)
   EF =  vector()
   LS = vector()
   LF = vector()
+  Slack = vector()
   for(i in r )
   {
     indx = which(data$Activity==i )
@@ -234,41 +235,42 @@ prog = function(name)
     EF = c(EF , data[indx  , "EF"])
     LS = c(LS , data[indx  , "LS"])
     LF = c(LF , data[indx  , "LF"])
+    Slack = c(Slack , data[indx , "S"])
   }
   net = graph.data.frame( df, directed = TRUE)
   
+  
   file_name = paste0("images/", name , "/directed graph.png" )
   png(file_name , width = 1366 , height = 768 , units ="px")
-  p = ggnet2 (net ,  arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T ,
-              edge.label = data[2:nrow(data) , "S"] , 
-              edge.label.fill = "#252a32" ,
-              edge.label.color = "white" )+
+  p = ggnet2 (net ,  arrow.size = 12 , arrow.gap = 0.055 , color = col , directed = T )+
+#              edge.label = data[2:nrow(data) , "S"] , 
+#              edge.label.fill = "#252a32" ,
+#              edge.label.color = "white" )+
     geom_point(aes(color = col), size = 12, alpha = 0.5) +
-    geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF ), size = 9) +
+    geom_point(aes(color = col , Time = Time , ES = ES , EF = EF , LS = LS , LF = LF  , Slack = Slack ), size = 9 ) +
     geom_text( label = labels  , color = "#000000", fontface = "bold"  ) +
-    theme_ft_rc() +
+    #theme_ft_rc() +
     xlab("")+
     ylab("")+
     theme(legend.position = "none")
   
   print(p)
   dev.off()
-
-  fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF")   )
+  if(FALSE)
+  {
+  fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF" , "Slack")   )
   axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
   fig <- fig %>% layout( xaxis = axis , yaxis = axis) 
   fig
-  
-  if(FALSE)
-  {
-    
+  }
+
     t = p$data
-    fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF")   )
+    fig = ggplotly(p , tooltip = c("Time" , "ES" , "EF" , "LS" , "LF" ,"S"), width = 1366 , height = 768   )
     axis <- list(title = "", showgrid = FALSE, showticklabels = FALSE, zeroline = FALSE)
     fig <- fig %>% layout( xaxis = axis , yaxis = axis) %>% 
       add_annotations(x = t$x + 0.02,
                       y = t$y + 0.02 ,
-                      text = paste("Time : ", Time , "<br>" , "ES : " ,ES , "<br>" , "EF : " , EF  , "<br>" ,  "LS : " , LS , "<br>" , "LF : " , LF),
+                      text = paste("Time : ", Time , "<br>" , "ES : " ,ES , "<br>" , "EF : " , EF  , "<br>" ,  "LS : " , LS , "<br>" , "LF : " , LF , "<br>" , "S : " , Slack ),
                       xref = "x",
                       yref = "y",
                       showarrow = TRUE,
@@ -277,11 +279,8 @@ prog = function(name)
                       ax = 20,
                       ay = -40 
       )
-    fig
     
-    
-  }
-  
+  print(fig)
   #Plot directed tree 
   
   layout <- layout.reingold.tilford(net)
@@ -315,9 +314,9 @@ prog = function(name)
 
 
 
-prog("data")
-prog("test1")
-prog("test2")
-prog("test3")
+#prog("data")
+#prog("test1")
+#prog("test2")
+#prog("test3")
 
 
