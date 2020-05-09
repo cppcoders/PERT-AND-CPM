@@ -8,11 +8,14 @@ library(hrbrthemes)
 library(plotly)
 library(ggplotify)
 
-prog = function(name)
+
+pert_mean= 0
+critical_path = 0 
+cpm = function(name)
 {
   
   #Reading data 
-  data = read.csv(paste0("Data/", name , ".csv"))
+  data = read.csv(paste0("Data/cpm/", name , ".csv"))
   
   names(data) = c("Activity" ,"Title" ,"Immediate.Predecessor" , "Activity.Time")
   
@@ -62,6 +65,7 @@ prog = function(name)
     data = rbind(data , r)
   }
   end_node = "End"
+  
   
   ##############################################################################################################
   
@@ -193,8 +197,8 @@ prog = function(name)
     if(data[i, "S"] != 0)
       data[i, "type"] = "Normal"
   }
-  
-  
+  assign("pert_mean" , unique(data[data$Activity == "End" , "ES"] ) , envir = .GlobalEnv)
+  assign("critical_path" , unique(data[data$type=="Critical" , "Activity"]) , envir = .GlobalEnv)
   
   #Plotting the graph 
   
@@ -205,6 +209,7 @@ prog = function(name)
   
   col = vector()
   labels = vector()
+  
   for(i in unique(data[2:nrow(data), "Immediate.Predecessor" ] )   )
   {
     labels = c(labels , i)
@@ -285,7 +290,7 @@ prog = function(name)
   
   layout <- layout.reingold.tilford(net)
   layout = layout[, 2:1]
-  
+
   file_name = paste0("images/", name , "/directed tree.png" )
   
   png(file_name , width = 1366 , height = 768 , units ="px")
@@ -313,10 +318,40 @@ prog = function(name)
 }
 
 
+pert = function(name)
+{
+  data = read.csv(paste0("Data/pert/" , name , ".csv"))
+  names(data)= c("Activity" , "Immediate.Predecessor" , "a","m","b")
+  data2 = data 
+  data2$Title = rep("test",nrow(data))
+  data2$Activity.Time = rep(0,nrow(data))
+  
+  data2$Activity.Time =( data$a + data$m * 4 + data$b ) / 6
+  data2 = data2[,names(data)%in% c("Activity", "Title", "Immediate.Predecessor", "Activity.Time") ]
+  data2 = data2[,c("Activity" , "Title", "Immediate.Predecessor" , "Activity.Time")]
+  data2[,1] = as.character(data2[,1])
+  data2[,2] = as.character(data2[,2])
+  data2[,3] = as.character(data2[,3])
+  data2[,4] = as.character(data2[,4])
+  write.csv(data2 ,"Data/cpm/test7.csv", row.names = FALSE)
+  cpm("test7")
+  
+  data$variance = ((data$b-data$a)^2) / 36 
+  print(data)
+  v = sum(data[data$Activity %in% critical_path , "variance"] )
+  std = sqrt(v )
+  End = pert_mean 
+  
+  p = dnorm(26, mean= End, sd = std) * 100
+  print(v)
+  answers = data.frame(Task = c("Variance" , "Standard Deviation" , "Propability on 26 day") , ans = c(v , std ,p))
+  print(answers) 
+}
 
-#prog("data")
-#prog("test1")
-#prog("test2")
-#prog("test3")
+pert("tset1")
+
+
+
+
 
 

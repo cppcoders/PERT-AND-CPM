@@ -1,0 +1,10 @@
+Activity,T,I,T
+A,"Index building",-,16
+B,"House building",-,20
+C,"Out fence bulding",-,30
+D,"Roof bulding",B,15
+E,"Floor",B,10
+G,"plumer",D,3
+H,"Electricity",D,16
+J,"Index gate",A,15
+K,"Decoration",E-G,12

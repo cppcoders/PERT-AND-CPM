@@ -1,0 +1,8 @@
+A,B,C,D
+A,"Test",-,5
+B,"Test",-,4
+C,"Test",A,7
+D,"Test",A,3
+E,"Test",B,2
+F,"Test",D,9
+G,"Test",B-C,8

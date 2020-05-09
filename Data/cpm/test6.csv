@@ -1,0 +1,10 @@
+A,T,I,AT
+A,"test",-,8
+B,"test",-,2
+F,"test",A,5
+C,"test",B,4
+G,"test",C-F,6
+I,"test",G,7
+E,"test",C,7
+J,"test",E,5
+H,"test",G,6
